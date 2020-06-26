@@ -8,7 +8,11 @@ const message = require('uport-transports').message.util
 
 let endpoint = ''
 const app = express();
-app.use(bodyParser.json({ type: '*/*' }))
+app.use(bodyParser.json({ type: '*/*' }));
+
+// Address Identidad: 0xbfef8f1e74fd44c2e1a50175310499bdedfc10f7
+// Address Calculadora: 0xc7486a3fedf61856c550117735d251d37fc3d1ac
+// Address Prueba: 0xcb5c7c92f78a58d60fa74f1317948ce809de09ed
 
 //const identity = Credentials.createIdentity();
 //console.log(identity)
@@ -52,43 +56,17 @@ app.post('/callback', (req, res) => {
     // push token and public encryption key (boxPub)
     console.log("Creds",creds);
     const push = transports.push.send(creds.pushToken, creds.boxPub);
-    //0xcc9bf465d521b09b00c5c4e7207c00f37c865c95
     const mnid = require('mnid');
-    
-    const abi = [{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"constant":true,"inputs":[],"name":"contractOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getResultado","outputs":[{"internalType":"uint32","name":"","type":"uint32"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"uint16","name":"_x","type":"uint16"},{"internalType":"uint16","name":"_y","type":"uint16"}],"name":"multiplicar","outputs":[{"internalType":"uint32","name":"","type":"uint32"}],"payable":false,"stateMutability":"pure","type":"function"},{"constant":false,"inputs":[{"internalType":"uint16","name":"_x","type":"uint16"},{"internalType":"uint16","name":"_y","type":"uint16"}],"name":"sumar","outputs":[{"internalType":"uint32","name":"","type":"uint32"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"sumar2","outputs":[{"internalType":"uint32","name":"","type":"uint32"}],"payable":false,"stateMutability":"nonpayable","type":"function"}];
-    const contractAddress = '0xc7486a3fedf61856c550117735d251d37fc3d1ac'; //'0xbfef8f1e74fd44c2e1a50175310499bdedfc10f7'; 
-    const addressEncode = mnid.encode({
-      network: '0x4',
-      address: contractAddress
-    })
-    const myContract = credentials.contract(abi).at(contractAddress);
-    // creates a request for the user to call the transfer() function on the smart contract
-    console.log("Contrato",myContract);
-    console.log("Creds",creds);
-    myContract.sumar2().then(txRequestToken => {
-      console.log("txRequestToken:",txRequestToken);
-      credentials.createTxRequest(txRequestToken, {callbackUrl: `${endpoint}/txcallback`, callback_type: 'post'}).then(attestation => {
-        console.log(`Encoded JWT sent to user: ${attestation}`)
-        return push(attestation)  // *push* the notification to the user's uPort mobile app.
-      }).then(res => {
-        console.log(res)
-        console.log('Push notification sent and should be recieved any moment...');
-        console.log('Accept the push notification in the uPort mobile application');
-      });
-    });
-  
-app.post('/txcallback', (req, res) => {
-  //console.log("Txcallback",res);
-});
-    
-   // Esto si funciona para poder mandar ether de una cuenta a otra
-   /*
-   const txObject = {
-    to: mnid.encode({
-      network: '0x4',
-      address: '0xcc9bf465d521b09b00c5c4e7207c00f37c865c95'
+    const txObject = { 
+      to: mnid.encode({
+        address: '0xbfef8f1e74fd44c2e1a50175310499bdedfc10f7',
+        network: '0x4'
       }),
-      value: '10000000000000000',
+      //fn: "pushDos(uint32 13, string 'Azael Ruiz')", // Ejemplo envio Int y String
+      //fn: "pushDireccion(address 0xcb5c7c92f78a58d60fa74f1317948ce809de09ed)", //Ejemplo envio Address
+      //fn: "pushNumero(uint32 32)", //Ejemplo Envio Numerico
+      //fn: "sumar2()", // Llamado de una funcion sin parametros
+      fn: "updateUser(address "+creds.address+", string 'Alan', string 'Lerdo', uint16 32, string '111')",
     };
     credentials.createTxRequest(txObject, {callbackUrl: `${endpoint}/txcallback`, callback_type: 'post'}).then(attestation => {
       console.log(`Encoded JWT sent to user: ${attestation}`)
@@ -98,18 +76,12 @@ app.post('/txcallback', (req, res) => {
       console.log('Push notification sent and should be recieved any moment...');
       console.log('Accept the push notification in the uPort mobile application');
     });
-    */
-    /*
-    const txObject = { 
-      to: mnid.encode({
-        address: '0xcc9bf465d521b09b00c5c4e7207c00f37c865c95',
-        network: '0x4'
-      }),
-      fn: "updateUser(address '"+creds.address+"', string memory 'Alan', string memory 'Lerdo', uint16 '32', string memory '111')", 
-      appName: 'PoC_CIIANFirmado',
-    };
-    */
+    
   });
+});
+
+app.post('/txcallback', (req, res) => {
+  console.log("Txcallback",res);
 });
 
 /*
